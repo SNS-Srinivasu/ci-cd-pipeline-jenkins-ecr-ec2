@@ -2,6 +2,8 @@ pipeline {
     agent { label 'ec2' }  // This tells Jenkins to run the pipeline on EC2 agent
     environment {
         PROJECT_NAME = 'agecalculator'
+        ECR_REGISTRY = '253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator'
+        ECR_REPOSITORY = 'agecalculator'
     }
     stages {
         stage('Build') {
@@ -10,6 +12,22 @@ pipeline {
                 sh "docker build -t ${PROJECT_NAME}:latest ."
                 echo "Docker build completed successfully"
                 echo "Build Stage Complete"
+            }
+        }
+        stage('Push to ECR') {
+            steps {
+                script {
+                    // log in to AWS ECR
+                    sh '''
+                        $(aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $ECR_REGISTRY)
+                    '''
+
+                    // tag the docker image 
+                    sh "docker tag ${env.PROJECT_NAME}:latest ${ECR_REGISTRY}/${env.ECR_REPOSITORY}:${env.PROJECT_NAME}-latest"
+
+                    // Push the Docker image to ECR
+                    sh "docker push ${ECR_REGISTRY}/${env.ECR_REPOSITORY}:${env.PROJECT_NAME}-latest"
+                }
             }
         }
         stage('Test') {
