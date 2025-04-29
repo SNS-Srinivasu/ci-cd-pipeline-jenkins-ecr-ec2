@@ -39,13 +39,14 @@ pipeline {
         stage('Deploy') {
             steps {
                 sshagent (credentials: ['ec2-deploy-key']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no ec2-user@15.207.237.235 << 'EOF'
-                            aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 253490784255.dkr.ecr.ap-south-1.amazonaws.com
-                            docker pull 253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator:latest
-                            docker run -d -p 80:80 253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator:latest
-                        EOF
-                    '''
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ec2-user@15.207.237.235 << 'ENDSSH'
+                        docker login --username AWS --password-stdin 253490784255.dkr.ecr.ap-south-1.amazonaws.com <<<'$(aws ecr get-login-password --region ap-south-1)'
+                        docker pull 253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator:latest
+                        docker rm -f \$(docker ps -aq) || true
+                        docker run -d -p 80:80 253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator:latest
+                        ENDSSH
+                    """
                 }
             }
         }
