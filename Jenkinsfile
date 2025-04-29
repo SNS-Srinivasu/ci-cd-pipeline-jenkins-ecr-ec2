@@ -18,15 +18,13 @@ pipeline {
             steps {
                 script {
                     // log in to AWS ECR
-                    sh '''
-                        $(aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $ECR_REGISTRY)
-                    '''
-
                     // tag the docker image 
-                    sh "docker tag ${env.PROJECT_NAME}:latest ${ECR_REGISTRY}/${env.ECR_REPOSITORY}:${env.PROJECT_NAME}-latest"
-
                     // Push the Docker image to ECR
-                    sh "docker push ${ECR_REGISTRY}/${env.ECR_REPOSITORY}:${env.PROJECT_NAME}-latest"
+                    sh '''
+                    aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 253490784255.dkr.ecr.ap-south-1.amazonaws.com
+                    docker tag agecalculator:latest 253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator:latest
+                    docker push 253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator:latest
+                    '''
                 }
             }
         }
