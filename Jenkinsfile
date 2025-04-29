@@ -44,7 +44,7 @@ ssh -o StrictHostKeyChecking=no ec2-user@15.207.237.235 << 'ENDSSH'
 aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ${ECR_REGISTRY}
 docker pull ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
 docker rm -f agecalculator || true
-docker run -d --name agecalculator -p 80:80 ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+docker run -d --name agecalculator -p 8081:80 ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
 ENDSSH
                     """
                 }
