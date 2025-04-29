@@ -1,7 +1,7 @@
 pipeline {
     agent { label 'ec2' }  // This tells Jenkins to run the pipeline on EC2 agent
     environment {
-        PROJECT_NAME = 'MyProject'
+        PROJECT_NAME = 'agecalculator'
     }
     stages {
         stage('Build') {
