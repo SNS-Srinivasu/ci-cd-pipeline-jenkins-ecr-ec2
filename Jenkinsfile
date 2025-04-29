@@ -7,7 +7,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo "Building ${env.PROJECT_NAME}"
-                sh "docker build -t" 
+                sh "docker build -t ${PROJECT_NAME}:latest ."
                 echo "Docker build completed successfully"
                 echo "Build Stage Complete"
             }
