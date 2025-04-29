@@ -1,10 +1,12 @@
 pipeline {
-    agent { label 'ec2' }  // This tells Jenkins to run the pipeline on EC2 agent
+    agent { label 'ec2' }
+
     environment {
         PROJECT_NAME = 'agecalculator'
-        ECR_REGISTRY = '253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator'
+        ECR_REGISTRY = '253490784255.dkr.ecr.ap-south-1.amazonaws.com'
         ECR_REPOSITORY = 'agecalculator'
     }
+
     stages {
         stage('Build') {
             steps {
@@ -14,33 +16,41 @@ pipeline {
                 echo "Build Stage Complete"
             }
         }
+
         stage('Push to ECR') {
             steps {
                 script {
-                    // log in to AWS ECR
-                    // tag the docker image 
-                    // Push the Docker image to ECR
-                    sh '''
-                    aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 253490784255.dkr.ecr.ap-south-1.amazonaws.com
-                    docker tag agecalculator:latest 253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator:latest
-                    docker push 253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator:latest
-                    '''
+                    sh """
+                        aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                        docker tag ${PROJECT_NAME}:latest ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+                        docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+                    """
                 }
             }
         }
+
         stage('Test') {
             steps {
                 echo "Running tests for ${env.PROJECT_NAME}"
                 echo "Testing Completed"
             }
         }
+
         stage('Deploy') {
             steps {
-                echo "Deploying ${env.PROJECT_NAME}"
-                echo "Deploying Completed"
+                sshagent (credentials: ['ec2-deploy-key']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ec2-user@15.207.237.235 << 'EOF'
+                            aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 253490784255.dkr.ecr.ap-south-1.amazonaws.com
+                            docker pull 253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator:latest
+                            docker run -d -p 80:80 253490784255.dkr.ecr.ap-south-1.amazonaws.com/agecalculator:latest
+                        EOF
+                    '''
+                }
             }
         }
     }
+
     post {
         success {
             echo 'Pipeline succeeded!'
